@@ -40,7 +40,7 @@ upperBodyCascade = cv2.CascadeClassifier(cv2.data.haarcascades + "haarcascade_up
 cap = cv2.VideoCapture(0)
 
 frameSize = (int(cap.get(3)), int(cap.get(4)))
-fourcc = cv2.VideoWriter_fourcc(*"mpv4")
+fourcc = cv2.VideoWriter_fourcc(*"mp4v")
 
 
 while True:
@@ -54,7 +54,6 @@ while True:
     faces = faceCascade.detectMultiScale(gray, scaleFactor=1.2, minNeighbors=5)
     bodies = bodyCascade.detectMultiScale(gray, scaleFactor=1.15, minNeighbors=3)
     upperBodies = upperBodyCascade.detectMultiScale(gray, scaleFactor=1.15, minNeighbors=3)
-
 
     # If there is a person in frame
     if len(upperBodies) > 0 or len(bodies) > 0 or len(faces):
