@@ -20,6 +20,7 @@ import numpy as np
 import cv2
 import datetime
 import time
+from google.cloud import storage
 
 
 # Initialize variables for timing and detection.
@@ -27,6 +28,25 @@ detection = False
 timeSinceDetection = None
 timerStarted = False
 recordAfterDetectionSeconds = 5
+
+
+def uploadToBucket(localPath, blobPath):
+    # Authenticate using the key file
+    client = storage.Client.from_service_account_json('malatesta-4160-f23-e0032f695a86.json')
+
+    # Get the bucket
+    bucket = client.get_bucket("security_videos_csi4160")
+
+    # Create a blob (file) in the bucket
+    blob = bucket.blob(blobPath)
+
+    # Upload the local file to the blob
+    blob.upload_from_filename(localPath)
+    public_url = blob.public_url
+    print(f"Public URL for {blob.name}: {public_url}")
+
+
+    print(f"uploaded {blob} to the bucket")
 
 
 
@@ -40,8 +60,7 @@ upperBodyCascade = cv2.CascadeClassifier(cv2.data.haarcascades + "haarcascade_up
 cap = cv2.VideoCapture(0)
 
 frameSize = (int(cap.get(3)), int(cap.get(4)))
-fourcc = cv2.VideoWriter_fourcc(*"mp4v")
-
+fourcc = cv2.VideoWriter_fourcc(*"H264")
 
 while True:
     # Only worried about getting the one frame.
@@ -64,7 +83,7 @@ while True:
         else:
             detection = True
             currentTime = datetime.datetime.now().strftime("%d-%m-%Y-%H-%M-%S")
-            out = cv2.VideoWriter(f"{currentTime}.mp4", fourcc, 20, frameSize)
+            out = cv2.VideoWriter(f"videos/{currentTime}.mp4", fourcc, 20, frameSize)
             print('started recording')
     
 
@@ -76,7 +95,9 @@ while True:
             if time.time() - timeSinceDetection >= recordAfterDetectionSeconds:
                 detection = False
                 timerStarted = False
+                # Save video
                 out.release()
+                uploadToBucket(f"videos/{currentTime}.mp4", f"Security {currentTime}.mp4")
                 print('stopped recording.')
         # If timer not started, start it.
         else:
